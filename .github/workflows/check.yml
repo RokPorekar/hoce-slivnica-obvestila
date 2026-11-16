@@ -2,7 +2,7 @@ name: Preveri objave Hoče-Slivnica
 
 on:
   schedule:
-    - cron: '0 8,16 * * *'
+    - cron: '38 17 * * *'
   workflow_dispatch:
 
 jobs:
