@@ -27,19 +27,16 @@ def save_seen_posts(posts):
 
 
 def send_notification(post):
-  # Oblikujemo vsebino obvestila (datum + kratek povzetek)
-  message = f"{post['date']}\n\n{post['details']}"
+  message = f"📅 {post['date']}\n\n{post['details']}"
 
   headers = {
       "Title": post["title"].encode("utf-8"),
       "Click": post["link"],
       "Priority": "default",
       "Tags": "loudspeaker,hoce",
-      # Dodamo še gumb pod obvestilom za hitro odpiranje v brskalniku
       "Actions": f"view, Odpri objavo, {post['link']}".encode("utf-8"),
   }
 
-  # Če ima objava sliko, jo pripnemo v obvestilo
   if post.get("image"):
     headers["Attach"] = post["image"]
 
@@ -59,7 +56,6 @@ def parse_posts(html_content):
   soup = BeautifulSoup(html_content, "html.parser")
   posts = []
 
-  # Poiščemo vse elemente <a> z razredoma ListType1 in ListItem
   for item in soup.select("a.ListType1.ListItem"):
     href = item.get("href", "").strip()
     if not href:
@@ -67,7 +63,6 @@ def parse_posts(html_content):
 
     full_link = href if href.startswith("http") else f"{BASE_URL}{href}"
 
-    # 1. Naslov (najprej iz div.title, sicer iz atributa title)
     title_el = item.select_one(".title")
     title = (
         title_el.get_text(" ", strip=True)
@@ -76,22 +71,17 @@ def parse_posts(html_content):
     )
     title = re.sub(r"\s+", " ", title)
 
-    # 2. Datum iz .date .text
     date_el = item.select_one(".date .text")
     date_str = date_el.get_text(strip=True) if date_el else "Neznan datum"
 
-    # 3. Opis iz .details (počistimo večkratne presledke in &nbsp;)
     details_el = item.select_one(".details")
     details = details_el.get_text(" ", strip=True) if details_el else ""
     details = re.sub(r"\s+", " ", details)
 
-    # 4. Opcijsko: slika iz background-image sloga
     image_url = None
     image_el = item.select_one(".image")
     if image_el and image_el.has_attr("style"):
-      match = re.search(
-          r"url\(['\"]?(.*?)['\"]?\)", image_el["style"]
-      )
+      match = re.search(r"url\(['\"]?(.*?)['\"]?\)", image_el["style"])
       if match:
         img_path = match.group(1)
         image_url = (
@@ -135,9 +125,6 @@ def main():
   seen_posts = load_seen_posts()
   seen_ids = {p["id"] for p in seen_posts}
 
-  # Pomembno: ob prvem zagonu (ko seen_posts.json še ne obstaja ali je prazen)
-  # pošljemo samo najnovejšo objavo, ostale pa označimo kot prebrane,
-  # da družina ne dobi 15 obvestil naenkrat!
   is_first_run = len(seen_posts) == 0
 
   new_posts = [p for p in posts if p["id"] not in seen_ids]
@@ -151,13 +138,11 @@ def main():
     send_notification(new_posts[0])
     seen_posts.extend(reversed(posts))
   else:
-    # Pošljemo od najstarejše nove proti najnovejši
     for post in reversed(new_posts):
       print(f"Pošiljam obvestilo: {post['title']} ({post['date']})")
       send_notification(post)
       seen_posts.append(post)
 
-  # Ohranimo zadnjih 150 zapisov v zgodovini
   save_seen_posts(seen_posts[-150:])
   print("Stanje uspešno shranjeno.")
 
