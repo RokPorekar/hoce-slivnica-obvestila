@@ -2,7 +2,8 @@ name: Preveri objave Hoče-Slivnica
 
 on:
   schedule:
-    - cron: '38 17 * * *'
+    - cron: '55 18 * * 1-5'
+      timezone: 'Europe/Ljubljana'
   workflow_dispatch:
 
 jobs:
