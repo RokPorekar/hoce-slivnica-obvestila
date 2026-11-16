@@ -27,7 +27,7 @@ jobs:
 
       - name: Zaženi skripto za preverjanje
         env:
-          NTFY_TOPIC: 'hoce-slivnica-obvestila-4Cg560A' # Zamenjaj s svojim kanalom!
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: |
           python scraper.py
 
