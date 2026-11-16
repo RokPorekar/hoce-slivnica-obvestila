@@ -2,9 +2,9 @@ import json
 import os
 import re
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 import requests
 
-# Konstante
 BASE_URL = "https://www.hoce-slivnica.si"
 URL = f"{BASE_URL}/objave"
 STATE_FILE = "seen_posts.json"
@@ -48,15 +48,39 @@ def send_notification(post):
         timeout=15,
     )
     response.raise_for_status()
+    print(f"Obvestilo uspešno poslano na ntfy.sh/{NTFY_TOPIC}")
   except Exception as e:
     print(f"Napaka pri pošiljanju obvestila za '{post['title']}': {e}")
+
+
+def fetch_rendered_html():
+  with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page(
+        user_agent=(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            " (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        )
+    )
+    page.goto(URL, wait_until="networkidle", timeout=30000)
+    # Počakamo do 10 sekund, da se v DOM pojavi vsaj ena objava
+    try:
+      page.wait_for_selector("a.ListType1.ListItem", timeout=10000)
+    except Exception:
+      print("Čakanje na selector 'a.ListType1.ListItem' je poteklo.")
+    html = page.content()
+    browser.close()
+    return html
 
 
 def parse_posts(html_content):
   soup = BeautifulSoup(html_content, "html.parser")
   posts = []
 
-  for item in soup.select("a.ListType1.ListItem"):
+  items = soup.select("a.ListType1.ListItem")
+  print(f"Najdenih elementov 'a.ListType1.ListItem': {len(items)}")
+
+  for item in items:
     href = item.get("href", "").strip()
     if not href:
       continue
@@ -105,19 +129,12 @@ def main():
   print("Preverjam nove objave za Občino Hoče-Slivnica...")
 
   try:
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            " (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
-    }
-    response = requests.get(URL, headers=headers, timeout=15)
-    response.raise_for_status()
+    html = fetch_rendered_html()
   except Exception as e:
-    print(f"Napaka pri dostopu do spletne strani: {e}")
+    print(f"Napaka pri nalaganju strani z brskalnikom: {e}")
     return
 
-  posts = parse_posts(response.text)
+  posts = parse_posts(html)
   if not posts:
     print("Opozorilo: Na strani ni bilo najdenih nobenih objav.")
     return
@@ -126,7 +143,6 @@ def main():
   seen_ids = {p["id"] for p in seen_posts}
 
   is_first_run = len(seen_posts) == 0
-
   new_posts = [p for p in posts if p["id"] not in seen_ids]
 
   if not new_posts:

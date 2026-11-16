@@ -2,15 +2,14 @@ name: Preveri objave Hoče-Slivnica
 
 on:
   schedule:
-    # Deluje vsak dan ob 8:00 in 16:00 UTC (prilagodi po želji)
     - cron: '0 8,16 * * *'
-  workflow_dispatch: # Omogoča ročni zagon preko GitHub vmesnika
+  workflow_dispatch:
 
 jobs:
   check-updates:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Omogoča commitanje posodobljenega seznama nazaj v repo
+      contents: write
 
     steps:
       - name: Prenesi kodo repozitorija
@@ -21,13 +20,14 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Namesti odvisnosti
+      - name: Namesti odvisnosti in brskalnik
         run: |
-          pip install requests beautifulsoup4
+          pip install requests beautifulsoup4 playwright
+          playwright install chromium
 
       - name: Zaženi skripto za preverjanje
         env:
-          NTFY_TOPIC: 'hoce-slivnica-obvestila-4Cg560A'
+          NTFY_TOPIC: 'hoce-slivnica-obvestila-4Cg560A' # Zamenjaj s svojim kanalom!
         run: |
           python scraper.py
 
