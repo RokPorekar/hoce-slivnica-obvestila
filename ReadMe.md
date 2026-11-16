@@ -22,16 +22,7 @@ Projekt teče v oblaku prek **GitHub Actions**, stanje videnih objav pa samodejn
 
 ---
 
-## Namestitev in nastavitev
-
-1. **Kloniraj repozitorij** ali ustvari novega na GitHubu.
-2. V nastavitvah repozitorija (**Settings -> Actions -> General -> Workflow permissions**) nastavi dovoljenja na **Read and write permissions**, da lahko skripta sama shranjuje prebrane objave.
-3. V nastavitvah repozitorija (**Settings -> Secrets and variables -> Actions**) dodaj skrivnostno spremenljivko (Secret):
-   * `NTFY_TOPIC`: Ime tvojega unikatnega kanala na ntfy.sh (npr. `hoce-obvestila-moj-skrivni-kanal`).
-
----
-
-## 📱 Nastavitev obvestil na telefonu
+## Nastavitev obvestil na telefonu
 1. Prenesi aplikacijo **ntfy** (na voljo za Android in iOS).
 2. V aplikaciji se naroči na isti kanal, ki si ga določil v `NTFY_TOPIC`.
 3. Sedaj boš vsakič, ko občina objavi nekaj novega, prejel obvestilo neposredno na telefon!
